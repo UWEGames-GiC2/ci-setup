@@ -1,21 +1,67 @@
-name: 'Hello World'
-description: 'Greet someone'
+name: 'Setup'
+description: 'Setup Ubuntu and Clang for CI checks'
 inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
-    required: true
-    default: 'World'
-outputs:
-  random-number:
-    description: "Random number"
-    value: ${{ steps.random-number-generator.outputs.random-id }}
+  build-type:  # id of input
+    description: 'Build configuration type'
+    required: false
+    default: 'Debug'
 runs:
   using: "composite"
   steps:
-    - run: echo Hello ${{ inputs.who-to-greet }}.
+    - name: Print env
       shell: bash
-    - id: random-number-generator
-      run: echo "::set-output name=random-id::$(echo $RANDOM)"
+      run: |
+        echo github.event.action: ${{ github.event.action }}
+        echo github.event_name: ${{ github.event_name }}
+
+    - name: Install dependencies on Ubuntu
       shell: bash
-    - run: ${{ github.action_path }}/goodbye.sh
+      run: |
+        echo
+        echo "###################################################################"
+        echo "######################### Install LLVM-11 #########################"
+        echo "###################################################################"
+        sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+        sudo apt-add-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'
+        sudo apt-get update
+        sudo apt-get install -y binutils libstdc++6 clang-11 clang-format-11 clang-tidy-11 \
+        llvm-11-dev cmake python3 libpng-dev libbz2-dev ninja-build
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-11 90
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-11 90
+        sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 90
+        echo
+        echo "###################################################################"
+        echo "######################## ASGE Dependencies ########################"
+        echo "###################################################################"
+        sudo apt-get install -y --no-install-recommends --no-install-suggests \
+        libtbb-dev libharfbuzz-bin libharfbuzz-dev libxrandr-dev libxxf86vm-dev \
+        libxi-dev libxinerama-dev libxcursor-dev libgl1-mesa-dev libglu1-mesa-dev
+        echo
+        echo "###################################################################"
+        echo "######################### Install CPPCHECK ########################"
+        echo "###################################################################"
+        # sudo snap install cppcheck && sudo ln -s /snap/bin/cppcheck /usr/bin/cppcheck
+        curl -sLO http://de.archive.ubuntu.com/ubuntu/pool/universe/t/tinyxml2/libtinyxml2-8_8.0.0+dfsg-2_amd64.deb \
+        && sudo dpkg -i libtinyxml2-8_8.0.0+dfsg-2_amd64.deb
+        curl -sLO http://de.archive.ubuntu.com/ubuntu/pool/universe/z/z3/libz3-4_4.8.10-1ubuntu1_amd64.deb \
+        && sudo dpkg -i libz3-4_4.8.10-1ubuntu1_amd64.deb
+        curl -sLO http://de.archive.ubuntu.com/ubuntu/pool/universe/z/z3/libz3-dev_4.8.10-1ubuntu1_amd64.deb \
+        && sudo dpkg -i libz3-dev_4.8.10-1ubuntu1_amd64.deb
+        curl -sLO http://de.archive.ubuntu.com/ubuntu/pool/universe/c/cppcheck/cppcheck_2.3-1_amd64.deb && \
+        sudo dpkg -i cppcheck_2.3-1_amd64.deb
+
+    - name: Version Check
       shell: bash
+      run: |
+        /usr/bin/clang-11 --version
+        /usr/bin/cppcheck --version
+        cmake --version
+        python3 --version
+        ninja --version
+
+    - name: Configure
+      shell: bash
+      run: |
+        export CC=${CC}
+        export CXX=${CXX}
+        cmake -H. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Bbuild -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -G "Ninja"
