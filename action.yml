@@ -35,7 +35,8 @@ runs:
         echo "###################################################################"
         sudo apt-get install -y --no-install-recommends --no-install-suggests \
         libtbb-dev libharfbuzz-bin libharfbuzz-dev libxrandr-dev libxxf86vm-dev \
-        libxi-dev libxinerama-dev libxcursor-dev libgl1-mesa-dev libglu1-mesa-dev
+        libxi-dev libxinerama-dev libxcursor-dev libgl1-mesa-dev libglu1-mesa-dev \
+        libbrotli-dev
         echo
         echo "###################################################################"
         echo "######################### Install CPPCHECK ########################"
