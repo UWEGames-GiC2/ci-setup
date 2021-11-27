@@ -28,6 +28,7 @@ runs:
         llvm-13-dev cmake python3 libpng-dev libbz2-dev ninja-build
         sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-13 90
         sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-13 90
+        sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-13 90
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 90
         echo
         echo "###################################################################"
